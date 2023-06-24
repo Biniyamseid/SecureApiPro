@@ -10,6 +10,8 @@ import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -25,22 +27,29 @@ export class AuthService {
         email: dto.email,
       },
     });
-
+  
     if (existingUser) {
       throw new HttpException('Email is already in use. Please choose a different email.', HttpStatus.CONFLICT);
     }
-
-    const hash = await argon.hash(dto.password);
-
+  
+    // Generate a random salt
+    const salt = randomBytes(32).toString('hex');
+  
+    // Hash the password with the generated salt
+    const hash = await argon.hash(dto.password + salt);
+  
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         hash,
-      },
+        salt,
+      } as Prisma.UserCreateInput, // Explicitly cast to the correct type
     });
-
+  
     return user;
   }
+  
+  
 
   async signin(dto: AuthDto) {
     // find the user by email
@@ -55,11 +64,12 @@ export class AuthService {
       throw new ForbiddenException(
         'Credentials incorrect',
       );
+    const hashedandsaltedpassword = user.hash;
 
     // compare password
     const pwMatches = await argon.verify(
-      user.hash,
-      dto.password,
+      hashedandsaltedpassword,
+      dto.password+user.salt,
     );
     // if password incorrect throw exception
     if (!pwMatches)
