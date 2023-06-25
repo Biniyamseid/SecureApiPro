@@ -19,6 +19,8 @@ model User {
   hash  String
   salt String
 
+  roles Role[] @default([User])
+
   firstName String?
   lastName  String?
 
@@ -41,3 +43,10 @@ model Bookmark {
 
   @@map("bookmarks")
 }
+
+enum Role {
+    Administrator
+    Moderator 
+    User
+  }
+

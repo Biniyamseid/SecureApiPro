@@ -20,13 +20,15 @@ import {
 } from './dto';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { Roles } from 'src/roles/roles.decorator';
-import { Role } from 'src/roles/roles.enum';
 import { UserRoles } from 'src/roles/user-roles.decorator';
+import { Bookmark, Role, User } from '@prisma/client';
+// import { UserRoles } from 'src/roles/user-roles.decorator';
 
 
 @UseGuards(JwtGuard, RolesGuard)
 @Controller('bookmarks')
 export class BookmarkController {
+  authService: any;
   constructor(private bookmarkService: BookmarkService) {}
 
   @Get()
@@ -45,20 +47,31 @@ export class BookmarkController {
   }
 
   @Patch(':id')
-  @Roles(Role.Moderator) // Only users with the Modifier role can access this endpoint
   editBookmarkById(
     @GetUser('id') userId: number,
     @Param('id', ParseIntPipe) bookmarkId: number,
     @Body() dto: EditBookmarkDto,
-    @UserRoles() userRoles: Role[]
+    @GetUser('roles') userRole: Role[],
+    
   ) {
-    return this.bookmarkService.editBookmarkById(userId, bookmarkId, dto);
+    return this.bookmarkService.editBookmarkById(userId, bookmarkId, dto, userRole);
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  @Roles(Role.Moderator) // Only users with the Modifier role can access this endpoint
-  deleteBookmarkById(@GetUser('id') userId: number, @Param('id', ParseIntPipe) bookmarkId: number,@UserRoles() userRoles: Role[]) {
-    return this.bookmarkService.deleteBookmarkById(userId, bookmarkId);
+// Only users with the Modifier role can access this endpoint
+  deleteBookmarkById(@GetUser('id') userId: number, @Param('id', ParseIntPipe) bookmarkId: number,@GetUser('roles') userRole: Role[]): Promise<Bookmark|any> {
+    console.log(userRole);
+    return this.bookmarkService.deleteBookmarkById(userId, bookmarkId,userRole);
   }
+
+  @Post('/assign-role')
+  async assignRole(
+    @Body("id",ParseIntPipe) userId: number,
+    @GetUser('email') requestingUserEmail: string,
+  ): Promise<User> {
+    return this.bookmarkService.assignRole(userId, requestingUserEmail);
+  }
+
+
 }

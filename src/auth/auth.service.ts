@@ -11,7 +11,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -92,7 +92,7 @@ export class AuthService {
     const token = await this.jwt.signAsync(
       payload,
       {
-        expiresIn: '15m',
+        expiresIn: '1h',
         secret: secret,
       },
     );
@@ -100,5 +100,26 @@ export class AuthService {
     return {
       access_token: token,
     };
+  }
+
+  async assignRole(userId: number, requestingUserEmail: string): Promise<User> {
+    const requestedUser = await this.prisma.user.findUnique({ where: { id: userId} });
+    if (requestedUser){
+      console.log(requestedUser);
+    }
+    else{
+      const ans = requestedUser.email !== 'tester@gmail.com';
+      console.log({ans,});
+    }
+    if (!requestedUser || requestingUserEmail !== 'tester@gmail.com') {
+      throw new ForbiddenException('Access to resources denied at.');
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { roles: { set: ["Moderator"] } },
+    });
+
+    return user;
   }
 }

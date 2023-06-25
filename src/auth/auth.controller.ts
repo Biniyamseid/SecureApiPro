@@ -3,11 +3,15 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseIntPipe,
   Post,
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
+import { GetUser } from './decorator';
+import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -23,4 +27,13 @@ export class AuthController {
   signin(@Body() dto: AuthDto) {
     return this.authService.signin(dto);
   }
+
+  @Post('/assign-role')
+  async assignRole(
+    @Body("id") userId: number,
+    @GetUser('email') requestingUserEmail: string,
+  ): Promise<User> {
+    return this.authService.assignRole(userId, requestingUserEmail);
+  }
 }
+

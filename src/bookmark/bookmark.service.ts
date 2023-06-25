@@ -7,6 +7,11 @@ import {
   CreateBookmarkDto,
   EditBookmarkDto,
 } from './dto';
+import { Bookmark, Role, User } from '@prisma/client';
+import { GetUser } from 'src/auth/decorator';
+
+
+
 
 @Injectable()
 export class BookmarkService {
@@ -51,8 +56,14 @@ export class BookmarkService {
     userId: number,
     bookmarkId: number,
     dto: EditBookmarkDto,
+    @GetUser('roles') userRoles: Role[],
   ) {
     // get the bookmark by id
+    if (!userRoles || !userRoles.includes(Role.Moderator)){
+      throw new ForbiddenException(
+        'Access to resources denied',
+      );
+    }
     const bookmark =
       await this.prisma.bookmark.findUnique({
         where: {
@@ -79,7 +90,9 @@ export class BookmarkService {
   async deleteBookmarkById(
     userId: number,
     bookmarkId: number,
-  ) {
+    userRoles: Role[],
+  ) : Promise<Bookmark|any>{
+ 
     const bookmark =
       await this.prisma.bookmark.findUnique({
         where: {
@@ -87,16 +100,33 @@ export class BookmarkService {
         },
       });
 
-    // check if user owns the bookmark
-    if (!bookmark || bookmark.userId !== userId)
+    // check if there is a bookmark with the id
+    if (!bookmark)
       throw new ForbiddenException(
-        'Access to resources denied',
+        'requested bookmark does not exist',
       );
 
-    await this.prisma.bookmark.delete({
+    const deleteBookmark = await this.prisma.bookmark.delete({
       where: {
         id: bookmarkId,
       },
     });
+    console.log("deleted successfully")
+    return {deleteBookmark,};
+  }
+  async assignRole(userId: number, requestingUserEmail: string): Promise<User> {
+    const requestedUser = await this.prisma.user.findUnique({ where: { id: userId} });
+
+    if (!requestedUser || requestingUserEmail !== 'tester@gmail.com') {
+      throw new ForbiddenException('Access to resources denied at.');
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { roles: { set: ["Moderator"] } },
+    });
+
+    return user;
   }
 }
+

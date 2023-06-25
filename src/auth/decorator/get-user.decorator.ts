@@ -14,6 +14,7 @@ export const GetUser = createParamDecorator(
     if (data) {
       return request.user[data];
     }
+    return   new Error('No data provided');
     return request.user;
   },
 );

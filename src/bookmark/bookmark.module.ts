@@ -7,11 +7,6 @@ import { RolesGuard } from 'src/roles/roles.guard';
 @Module({
   controllers: [BookmarkController],
   providers: [
-    // ...
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard, // Apply the RolesGuard globally
-    },
     BookmarkService
   ],
 })
