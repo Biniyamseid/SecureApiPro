@@ -8,7 +8,7 @@ import {
   EditBookmarkDto,
 } from './dto';
 import { Bookmark, Role, User } from '@prisma/client';
-import { GetUser } from 'src/auth/decorator';
+import { GetUser } from '../auth/decorator';
 
 
 

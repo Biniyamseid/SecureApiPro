@@ -10,6 +10,7 @@ import { CookieParserMiddleware } from './common/middlewares/Cookieparser.middle
 import * as session from 'express-session';
 import { ConfigService } from '@nestjs/config';
 import { sessionConfig } from './common/configuration/session.config';
+import { MailerService } from './mailer/mailer.service';
 
 
 @Module({
@@ -23,6 +24,7 @@ import { sessionConfig } from './common/configuration/session.config';
     PrismaModule,
   ],
   controllers: [AppController],
+  providers: [MailerService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
