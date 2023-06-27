@@ -5,12 +5,12 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { AuthDto, SignupDto } from './dto';
 import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes } from 'crypto';
+import { Sign, randomBytes } from 'crypto';
 import { Prisma, User } from '@prisma/client';
 
 @Injectable()
@@ -21,8 +21,9 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async signup(dto: AuthDto) {
-    const existingUser = await this.prisma.user.findUnique({
+  async signup(dto: SignupDto) {
+  
+    const existingUser = await this.prisma.user.findFirst({
       where: {
         email: dto.email,
       },
@@ -40,12 +41,15 @@ export class AuthService {
   
     const user = await this.prisma.user.create({
       data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
         email: dto.email,
         hash,
         salt,
       } as Prisma.UserCreateInput, // Explicitly cast to the correct type
     });
-  
+    delete user.salt;
+    delete user.hash;
     return user;
   }
   
@@ -54,7 +58,7 @@ export class AuthService {
   async signin(dto: AuthDto) {
     // find the user by email
     const user =
-      await this.prisma.user.findUnique({
+      await this.prisma.user.findFirst({
         where: {
           email: dto.email,
         },

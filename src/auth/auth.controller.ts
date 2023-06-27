@@ -9,7 +9,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import { AuthDto, SignupDto } from './dto';
 import { GetUser } from './decorator';
 import { User } from '@prisma/client';
 
@@ -18,7 +18,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  signup(@Body() dto: AuthDto) {
+  signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }
 
